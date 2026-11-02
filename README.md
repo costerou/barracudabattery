@@ -83,8 +83,9 @@ python3 install.py
 Choose one installation method. The checkout installer installs the same
 udev rule, copies the plugin into your Omarchy configuration, and adds it to
 `shell.json` immediately after `omarchy.tray`. Running this command explicitly
-applies those configuration changes. It preserves other widgets and saves a
-timestamped backup before changing the layout. Re-running it updates the
+applies those configuration changes. It preserves other widgets and the
+existing file permissions of `shell.json` (a new file is created owner-only),
+and saves a timestamped backup before changing the layout. Re-running it updates the
 plugin without adding a duplicate widget.
 
 Changes normally hot-reload. If the widget does not appear, run:

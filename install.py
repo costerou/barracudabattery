@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 
 source = Path(__file__).resolve().parent
@@ -18,6 +19,10 @@ subprocess.run(['sudo', 'udevadm', 'trigger', '--action=add', '--subsystem-match
 subprocess.run(['udevadm', 'settle'], check=True)
 shutil.copytree(source / 'plugin', plugin, dirs_exist_ok=True,
                 ignore=shutil.ignore_patterns('__pycache__'))
+# The repository keeps a single root manifest; adapt its entry point for the flat copy.
+manifest = json.loads((source / 'manifest.json').read_text())
+manifest['entryPoints'] = {kind: Path(entry).name for kind, entry in manifest['entryPoints'].items()}
+(plugin / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
 path = config / 'shell.json'
 data = json.loads(path.read_text()) if path.exists() else {'version': 1}
 layout = data.setdefault('bar', {}).setdefault('layout', {})
@@ -30,8 +35,24 @@ if not any(entry.get('id') == 'cody.barracuda-battery'
         backup = path.with_name('shell.json.barracuda-backup-' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
         shutil.copy2(path, backup)
         print('Config backup:', backup)
+    # Keep the existing file mode (new files default to owner-only) so private
+    # settings are never exposed by the rewrite, regardless of umask.
+    mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o600
     temporary = path.with_suffix('.barracuda.tmp')
-    temporary.write_text(json.dumps(data, indent=2) + '\n')
-    temporary.replace(path)
+    temporary.unlink(missing_ok=True)
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        os.fchmod(fd, mode)
+        with os.fdopen(fd, 'w') as handle:
+            fd = None
+            handle.write(json.dumps(data, indent=2) + '\n')
+            handle.flush()
+            os.fsync(handle.fileno())
+        temporary.replace(path)
+    except BaseException:
+        if fd is not None:
+            os.close(fd)
+        temporary.unlink(missing_ok=True)
+        raise
 subprocess.run(['omarchy-shell', 'shell', 'rescanPlugins'], check=True)
 print('Installed:', plugin)
