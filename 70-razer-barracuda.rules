@@ -1,0 +1,3 @@
+# Razer Barracuda X Chroma dongle (1532:0574): give the seat user the hidraw node so the cody.barracuda bar plugin can read
+# battery and set lighting. No ACTION match, so a later "bind" event cannot drop the uaccess tag. Remove this file to undo.
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1532", ATTRS{idProduct}=="0574", TAG+="uaccess"

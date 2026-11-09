@@ -1,0 +1,10 @@
+{
+  "title": "Barracuda X Chroma",
+  "notFound": "Dongle not plugged in",
+  "disconnected": "Headset off",
+  "battery": "%1% battery",
+  "charging": "%1% · charging",
+  "lights": "Lights",
+  "custom": "Custom hex, e.g. ff8800",
+  "off": "Off"
+}

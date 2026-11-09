@@ -1,2 +1,0 @@
-# Active local desktop user only; Razer Barracuda X Chroma HID interface.
-SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1532", ATTRS{idProduct}=="0574", TAG+="uaccess"
